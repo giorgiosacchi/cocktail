@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cocktail Manager - Giorgio</title>
+    <style>
+        :root {
+            --primary: #c0392b;
+            --secondary: #2980b9;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--dark);
+            color: var(--light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px 0;
+        }
+
+        .container {
+            background-color: white;
+            color: #333;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+
+        h3 {
+            border-bottom: 2px solid var(--light);
+            padding-bottom: 5px;
+            margin-top: 2rem;
+            color: var(--dark);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        /* Stile per le liste a tendina */
+        .dropdown-list {
+            display: none;
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 100%;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+
+        .dropdown-list .option {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+
+        .dropdown-list .option:hover {
+            background-color: #f0f0f0;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background 0.3s;
+            color: white;
+        }
+
+        .btn-ingr { background-color: var(--primary); }
+        .btn-prep { background-color: #27ae60; }
+        .btn-search { background-color: var(--secondary); width: 100%; margin-top: 10px;}
+
+        button:hover { opacity: 0.9; }
+
+        /* Stile per le Modali */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 2000; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            background-color: rgba(0,0,0,0.7); 
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto; 
+            padding: 20px;
+            border: 1px solid #888;
+            width: 90%; 
+            max-width: 500px;
+            border-radius: 10px;
+            color: #333;
+            position: relative;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover { color: black; }
+
+        ul { list-style-type: none; padding: 0; }
+        li { padding: 8px 0; border-bottom: 1px solid #eee; }
+        
+        .result-item {
+            padding: 10px;
+            background: #f9f9f9;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .result-item:hover {
+            background: #eef;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🍸 Cocktail Manager</h1>
+
+    <!-- SEZIONE 1: RICERCA PER INGREDIENTE -->
+    <h3>Cerca per Ingrediente</h3>
+    <div class="form-group">
+        <label for="ingredientInput">Seleziona Ingrediente:</label>
+        <input type="text" id="ingredientInput" placeholder="Clicca o scrivi (es. Gin, Rum)..." autocomplete="off">
+        <div id="ingredientDropdown" class="dropdown-list"></div>
+    </div>
+    <button class="btn-search" onclick="searchByIngredient()">Trova Cocktail con questo ingrediente</button>
+
+    <!-- SEZIONE 2: SCELTA COCKTAIL -->
+    <h3>Preparazione Cocktail</h3>
+    <div class="form-group">
+        <label for="cocktailInput">Scegli Cocktail:</label>
+        <input type="text" id="cocktailInput" placeholder="Clicca per vedere la lista o cerca..." autocomplete="off">
+        <div id="cocktailDropdown" class="dropdown-list"></div>
+    </div>
+
+    <div class="form-group">
+        <label for="peopleCount">Per quante persone?</label>
+        <input type="number" id="peopleCount" min="1" value="1">
+    </div>
+
+    <div class="btn-group">
+        <button class="btn-ingr" onclick="showIngredients()">Vedi Ingredienti</button>
+        <button class="btn-prep" onclick="showPreparation()">Vedi Preparazione</button>
+    </div>
+</div>
+
+<!-- Modale Ingredienti Cocktail -->
+<div id="modalIngredients" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('modalIngredients')">&times;</span>
+        <h2 id="ingrTitle">Ingredienti</h2>
+        <ul id="ingrList"></ul>
+    </div>
+</div>
+
+<!-- Modale Preparazione Cocktail -->
+<div id="modalPreparation" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('modalPreparation')">&times;</span>
+        <h2 id="prepTitle">Preparazione</h2>
+        <p id="prepText"></p>
+    </div>
+</div>
+
+<!-- Modale Risultati Ricerca per Ingrediente -->
+<div id="modalIngredientSearch" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('modalIngredientSearch')">&times;</span>
+        <h2 id="searchTitle">Cocktail trovati</h2>
+        <p id="searchSubtitle"></p>
+        <div id="searchResults"></div>
+    </div>
+</div>
+
+<script>
+    // --- DATASET COCKTAILS ---
+    const cocktailsDB = [
+        { name: "Negroni", ingredients: ["Gin: 30ml", "Campari: 30ml", "Vermouth Rosso: 30ml"], prep: "Versare gli ingredienti direttamente nel bicchiere Old Fashioned pieno di ghiaccio. Mescolare delicatamente. Guarnire con una scorza d'arancia." },
+        { name: "Spritz", ingredients: ["Prosecco: 90ml", "Aperol: 60ml", "Soda: 30ml"], prep: "Riempi un bicchiere da vino con ghiaccio. Versa il Prosecco, poi l'Aperol e infine un tocco di soda. Guarnire con una fetta d'arancia." },
+        { name: "Mojito", ingredients: ["Rum Bianco: 50ml", "Lime: 1/2", "Zucchero: 2 cucchiaini", "Menta: 6 foglie", "Soda"], prep: "Pestare lime, zucchero e menta nel bicchiere. Riempire di ghiaccio tritato, aggiungere il rum e colmare con soda." },
+        { name: "Martini Dry", ingredients: ["Gin: 60ml", "Vermouth Dry: 10ml"], prep: "Mescolare gli ingredienti con ghiaccio in un mixing glass. Filtrare in una coppa da cocktail ghiacciata." },
+        { name: "Margarita", ingredients: ["Tequila: 50ml", "Triple Sec: 20ml", "Lime: 25ml"], prep: "Shakerare gli ingredienti con ghiaccio. Filtrare in una coppa con bordo di sale." },
+        { name: "Old Fashioned", ingredients: ["Bourbon: 60ml", "Zucchero: 1 zolletta", "Angostura: 2 dash"], prep: "Mettere lo zucchero e l'angostura sul fondo, aggiungere un po' d'acqua e schiacciare. Aggiungere ghiaccio grande e il bourbon." },
+        { name: "Cosmopolitan", ingredients: ["Vodka Citron: 40ml", "Triple Sec: 15ml", "Lime: 15ml", "Cranberry: 30ml"], prep: "Shakerare tutto con ghiaccio e filtrare in una coppa da cocktail." },
+        { name: "Daiquiri", ingredients: ["Rum Bianco: 60ml", "Lime: 30ml", "Sciroppo Zucchero: 15ml"], prep: "Shakerare energicamente con ghiaccio e filtrare in una coppa." },
+        { name: "Manhattan", ingredients: ["Rye Whiskey: 50ml", "Vermouth Rosso: 20ml", "Angostura: 2 dash"], prep: "Mescolare con ghiaccio e filtrare in una coppa. Guarnire con ciliegina." },
+        { name: "Moscow Mule", ingredients: ["Vodka: 50ml", "Ginger Beer: 120ml", "Lime: 10ml"], prep: "Versare vodka e lime in un bicchiere di rame pieno di ghiaccio. Colmare con Ginger Beer." },
+        { name: "Gin Tonic", ingredients: ["Gin: 50ml", "Acqua Tonica: 100ml"], prep: "Riempire un calice di ghiaccio, versare il gin e colmare con tonica." },
+        { name: "Americano", ingredients: ["Campari: 30ml", "Vermouth Rosso: 30ml", "Soda"], prep: "Costruire nel bicchiere con ghiaccio, colmare con soda." },
+        { name: "Bellini", ingredients: ["Prosecco: 100ml", "Pesca fresca frullata: 50ml"], prep: "Versare la purea di pesca nella flute, aggiungere Prosecco freddo." },
+        { name: "White Russian", ingredients: ["Vodka: 50ml", "Kahlua: 20ml", "Panna fresca: 30ml"], prep: "Versare vodka e kahlua su ghiaccio. Versare la panna delicatamente sopra." },
+        { name: "Long Island Iced Tea", ingredients: ["Vodka: 15ml", "Tequila: 15ml", "Gin: 15ml", "Rum: 15ml", "Triple Sec: 15ml", "Lime: 30ml", "Coca Cola"], prep: "Shakerare i liquori e il lime. Versare in bicchiere alto, colmare con Coca Cola." },
+        { name: "Caipirinha", ingredients: ["Cachaca: 60ml", "Lime: 1 intero", "Zucchero: 2 cucchiaini"], prep: "Tagliare il lime a spicchi, pestare con zucchero. Aggiungere ghiaccio e cachaca." },
+        { name: "Bloody Mary", ingredients: ["Vodka: 45ml", "Succo Pomodoro: 90ml", "Limone", "Worcestershire", "Tabasco"], prep: "Shakerare tutto e versare su ghiaccio nuovo." },
+        { name: "Mint Julep", ingredients: ["Bourbon: 60ml", "Menta", "Zucchero", "Acqua"], prep: "Pestare menta e zucchero. Riempire di ghiaccio tritato, aggiungere bourbon." },
+        { name: "Piña Colada", ingredients: ["Rum Bianco: 50ml", "Latte di Cocco: 30ml", "Succo Ananas: 50ml"], prep: "Frullare tutto con ghiaccio fino a ottenere un composto cremoso." },
+        { name: "Sidecar", ingredients: ["Cognac: 50ml", "Triple Sec: 20ml", "Limone: 20ml"], prep: "Shakerare e filtrare in coppa." },
+        { name: "Tom Collins", ingredients: ["Gin: 45ml", "Limone: 30ml", "Zucchero: 15ml", "Soda"], prep: "Shakerare gin, limone e zucchero. Versare in bicchiere alto con ghiaccio, colmare con soda." },
+        { name: "Espresso Martini", ingredients: ["Vodka: 50ml", "Liquore Caffè: 10ml", "Espresso: 1 shot"], prep: "Shakerare energicamente per creare la schiuma. Filtrare in coppa." },
+        { name: "French 75", ingredients: ["Gin: 30ml", "Limone: 15ml", "Zucchero: 15ml", "Champagne"], prep: "Shakerare gin, limone e zucchero. Versare in flute e colmare con Champagne." },
+        { name: "Whiskey Sour", ingredients: ["Whiskey: 45ml", "Limone: 30ml", "Zucchero: 15ml", "Albume"], prep: "Shakerare a secco poi con ghiaccio. Filtrare." },
+        { name: "Bramble", ingredients: ["Gin: 50ml", "Limone: 25ml", "Sciroppo Zucchero: 15ml", "Crème de Mûre: 15ml"], prep: "Shakerare gin, limone e zucchero su ghiaccio tritato. Versare il liquore di more sopra." },
+        { name: "Dark n Stormy", ingredients: ["Rum Scuro: 60ml", "Ginger Beer: 100ml", "Lime"], prep: "Ginger beer e ghiaccio, versare il rum sopra delicatamente." },
+        { name: "Paloma", ingredients: ["Tequila: 50ml", "Succo Pompelmo: 50ml", "Lime", "Soda"], prep: "Mescolare tequila e succo di pompelmo su ghiaccio, colmare con soda." },
+        { name: "Clover Club", ingredients: ["Gin: 45ml", "Limone: 15ml", "Sciroppo Lampone: 15ml", "Albume"], prep: "Shakerare a secco, poi con ghiaccio. Filtrare." },
+        { name: "Mai Tai", ingredients: ["Rum Scuro: 30ml", "Rum Bianco: 30ml", "Orange Curacao: 15ml", "Orzata: 15ml", "Lime: 30ml"], prep: "Shakerare e versare su ghiaccio tritato." },
+        { name: "Aperol Spritz", ingredients: ["Prosecco: 60ml", "Aperol: 40ml", "Soda"], prep: "Ghiaccio, Prosecco, Aperol, Soda. Arancia." },
+        { name: "Singapore Sling", ingredients: ["Gin: 30ml", "Cherry Heering: 15ml", "Cointreau: 7.5ml", "Benedictine: 7.5ml", "Ananas", "Limone", "Granatina"], prep: "Shakerare tutti gli ingredienti con ghiaccio e filtrare in bicchiere alto." },
+        { name: "Tequila Sunrise", ingredients: ["Tequila: 45ml", "Succo Arancia: 90ml", "Granatina: 15ml"], prep: "Versare tequila e succo su ghiaccio. Aggiungere granatina lentamente sul fondo." },
+        { name: "Blue Lagoon", ingredients: ["Vodka: 40ml", "Blue Curacao: 20ml", "Limone: 10ml", "Sprite"], prep: "Shakerare vodka, curacao e limone. Versare su ghiaccio e colmare con Sprite." },
+        { name: "Sex on the Beach", ingredients: ["Vodka: 40ml", "Peach Schnapps: 20ml", "Succo Arancia: 40ml", "Succo Cranberry: 40ml"], prep: "Shakerare tutto con ghiaccio e versare in bicchiere alto." },
+        { name: "Zombie", ingredients: ["Rum Bianco: 30ml", "Rum Scuro: 30ml", "Rum Overproof: 30ml", "Succo Lime", "Succo Ananas", "Granatina"], prep: "Shakerare energicamente e servire in bicchiere alto con ghiaccio." },
+        { name: "B-52", ingredients: ["Kahlua: 20ml", "Baileys: 20ml", "Grand Marnier: 20ml"], prep: "Versare gli strati delicatamente usando un cucchiaino per non mischiarli." },
+        { name: "Irish Coffee", ingredients: ["Whiskey Irlandese: 40ml", "Caffè Caldo: 100ml", "Zucchero", "Panna"], prep: "Sciogliere zucchero nel caffè, aggiungere whiskey, toppare con panna fresca." },
+        { name: "Mulled Wine", ingredients: ["Vino Rosso: 750ml", "Chiodi di Garofano", "Cannella", "Arancia", "Zucchero"], prep: "Scaldare il vino con spezie e zucchero senza bollire. Servire caldo." },
+        { name: "Sangria", ingredients: ["Vino Rosso: 750ml", "Brandy: 50ml", "Frutta a pezzi", "Zucchero", "Soda"], prep: "Macerare la frutta nel vino e brandy per ore. Aggiungere soda prima di servire." },
+        { name: "Pimms Cup", ingredients: ["Pimms No.1: 50ml", "Limone", "Cetriolo", "Menta", "Ginger Ale"], prep: "Riempire bicchiere di ghiaccio e frutta, aggiungere Pimms e colmare con Ginger Ale." },
+        { name: "Black Russian", ingredients: ["Vodka: 50ml", "Kahlua: 20ml"], prep: "Versare gli ingredienti su ghiaccio in un old fashioned e mescolare." },
+        { name: "Grasshopper", ingredients: ["Crème de Cacao: 20ml", "Crème de Menthe: 20ml", "Panna: 20ml"], prep: "Shakerare con ghiaccio e filtrare in coppa." },
+        { name: "Alexander", ingredients: ["Cognac: 30ml", "Crème de Cacao: 30ml", "Panna: 30ml"], prep: "Shakerare con ghiaccio e filtrare in coppa. Spolverare con noce moscata." },
+        { name: "Rusty Nail", ingredients: ["Scotch Whisky: 45ml", "Drambuie: 25ml"], prep: "Mescolare direttamente nel bicchiere con ghiaccio." },
+        { name: "Godfather", ingredients: ["Scotch Whisky: 35ml", "Amaretto: 35ml"], prep: "Mescolare direttamente nel bicchiere con ghiaccio." },
+        { name: "Godmother", ingredients: ["Vodka: 35ml", "Amaretto: 35ml"], prep: "Mescolare direttamente nel bicchiere con ghiaccio." },
+        { name: "Harvey Wallbanger", ingredients: ["Vodka: 45ml", "Galliano: 15ml", "Succo Arancia: 90ml"], prep: "Versare vodka e succo su ghiaccio. Far galleggiare il Galliano sopra." },
+        { name: "Screwdriver", ingredients: ["Vodka: 50ml", "Succo Arancia: 100ml"], prep: "Versare in bicchiere alto con ghiaccio e mescolare." },
+        { name: "Sea Breeze", ingredients: ["Vodka: 40ml", "Succo Cranberry: 120ml", "Succo Pompelmo: 30ml"], prep: "Versare tutto su ghiaccio in bicchiere alto." },
+        { name: "Cape Codder", ingredients: ["Vodka: 50ml", "Succo Cranberry: 120ml", "Lime"], prep: "Versare tutto su ghiaccio in bicchiere alto." },
+        { name: "Bay Breeze", ingredients: ["Vodka: 40ml", "Succo Cranberry: 120ml", "Succo Ananas: 30ml"], prep: "Versare tutto su ghiaccio in bicchiere alto." },
+        { name: "Madras", ingredients: ["Vodka: 40ml", "Succo Cranberry: 90ml", "Succo Arancia: 30ml"], prep: "Versare tutto su ghiaccio in bicchiere alto." },
+        { name: "Kamikaze", ingredients: ["Vodka: 30ml", "Triple Sec: 30ml", "Lime: 30ml"], prep: "Shakerare e servire come shot o in coppa." },
+        { name: "Lemon Drop", ingredients: ["Vodka: 40ml", "Triple Sec: 20ml", "Limone: 20ml", "Zucchero"], prep: "Shakerare e filtrare in coppa con bordo di zucchero." },
+        { name: "Vesper", ingredients: ["Gin: 60ml", "Vodka: 15ml", "Kina Lillet: 7.5ml"], prep: "Shakerare con ghiaccio e filtrare in coppa. Scorza di limone." },
+        { name: "Gibson", ingredients: ["Gin: 60ml", "Vermouth Dry: 10ml"], prep: "Come un Martini, ma guarnito con cipollina in agrodolce." },
+        { name: "Boulevardier", ingredients: ["Bourbon: 30ml", "Campari: 30ml", "Vermouth Rosso: 30ml"], prep: "Come un Negroni ma con Whiskey al posto del Gin." },
+        { name: "Paper Plane", ingredients: ["Bourbon: 30ml", "Aperol: 30ml", "Amaro Nonino: 30ml", "Limone: 30ml"], prep: "Shakerare tutti gli ingredienti e filtrare in coppa." },
+        { name: "Penicillin", ingredients: ["Blended Scotch: 60ml", "Miele: 7.5ml", "Limone: 22.5ml", "Zenzero", "Islay Scotch: 5ml"], prep: "Shakerare tutto tranne l'Islay. Versare su ghiaccio e floatare l'Islay sopra." },
+        { name: "Last Word", ingredients: ["Gin: 22.5ml", "Maraschino: 22.5ml", "Chartreuse: 22.5ml", "Limone: 22.5ml"], prep: "Shakerare e filtrare in coppa." },
+        { name: "Aviation", ingredients: ["Gin: 45ml", "Maraschino: 15ml", "Limone: 15ml", "Crème de Violette: 7.5ml"], prep: "Shakerare e filtrare in coppa." },
+        { name: "Bees Knees", ingredients: ["Gin: 50ml", "Miele: 20ml", "Limone: 25ml"], prep: "Shakerare e filtrare in coppa." },
+        { name: "Corpse Reviver 2", ingredients: ["Gin: 30ml", "Cointreau: 30ml", "Lillet Blanc: 30ml", "Limone: 30ml", "Absinthe"], prep: "Shakerare e filtrare in coppa." },
+        { name: "Southside", ingredients: ["Gin: 60ml", "Limone: 30ml", "Zucchero: 20ml", "Menta"], prep: "Shakerare e filtrare in coppa." },
+        { name: "Hanky Panky", ingredients: ["Gin: 45ml", "Vermouth Rosso: 45ml", "Fernet Branca: 7.5ml"], prep: "Mescolare con ghiaccio e filtrare in coppa." },
+        { name: "El Presidente", ingredients: ["Rum Bianco: 45ml", "Vermouth Dry: 15ml", "Orange Curacao: 10ml", "Granatina: 5ml"], prep: "Mescolare e filtrare in coppa." },
+        { name: "Cuba Libre", ingredients: ["Rum Bianco: 50ml", "Coca Cola: 120ml", "Lime"], prep: "Versare rum e lime su ghiaccio, colmare con Coca Cola." },
+        { name: "Planter's Punch", ingredients: ["Rum Scuro: 45ml", "Succo Arancia: 30ml", "Succo Ananas: 30ml", "Limone: 15ml", "Granatina"], prep: "Shakerare e versare su ghiaccio tritato." },
+        { name: "Ti Punch", ingredients: ["Rum Agricolo: 50ml", "Sciroppo di Canna: 10ml", "Lime"], prep: "Mescolare in bicchiere piccolo con ghiaccio." },
+        { name: "Hurricane", ingredients: ["Rum Bianco: 30ml", "Rum Scuro: 30ml", "Succo Passione: 30ml", "Limone", "Granatina"], prep: "Shakerare e servire in bicchiere hurricane con ghiaccio." },
+        { name: "Scorpion Frozen", ingredients: ["Rum Bianco: 60ml", "Brandy: 30ml", "Succo Arancia", "Succo Limone", "Sciroppo"], prep: "Frullare tutto con ghiaccio." },
+        { name: "Blue Hawaii", ingredients: ["Rum Bianco: 30ml", "Blue Curacao: 15ml", "Succo Ananas: 90ml", "Succo Limone", "Sciroppo"], prep: "Shakerare e versare su ghiaccio." },
+        { name: "Tequila Sour", ingredients: ["Tequila: 50ml", "Limone: 30ml", "Zucchero: 15ml", "Albume"], prep: "Shakerare e filtrare." },
+        { name: "Tommy's Margarita", ingredients: ["Tequila: 60ml", "Limone: 30ml", "Sciroppo Agave: 15ml"], prep: "Shakerare e filtrare su ghiaccio." },
+        { name: "Matador", ingredients: ["Tequila: 45ml", "Succo Ananas: 45ml", "Lime: 15ml"], prep: "Shakerare e filtrare in coppa." },
+        { name: "El Diablo", ingredients: ["Tequila: 45ml", "Crème de Cassis: 15ml", "Limone: 15ml", "Ginger Beer"], prep: "Shakerare tequila, cassis e lime. Versare su ghiaccio e colmare con Ginger Beer." },
+        { name: "Brandy Alexander", ingredients: ["Cognac: 30ml", "Crème de Cacao: 30ml", "Panna: 30ml"], prep: "Shakerare e filtrare in coppa." },
+        { name: "Stinger", ingredients: ["Cognac: 50ml", "Crème de Menthe: 20ml"], prep: "Mescolare con ghiaccio e filtrare in coppa." },
+        { name: "Champagne Cocktail", ingredients: ["Zucchero: 1 zolletta", "Angostura: 2 dash", "Champagne"], prep: "Zolletta imbevuta di angostura nel flute, colmare con Champagne." },
+        { name: "Kir", ingredients: ["Vino Bianco: 90ml", "Crème de Cassis: 10ml"], prep: "Versare il cassis nella flute e colmare con vino bianco." },
+        { name: "Kir Royale", ingredients: ["Champagne: 90ml", "Crème de Cassis: 10ml"], prep: "Versare il cassis nella flute e colmare con Champagne." },
+        { name: "Mimosa", ingredients: ["Champagne: 75ml", "Succo Arancia: 75ml"], prep: "Versare succo e Champagne nella flute." },
+        { name: "Buck's Fizz", ingredients: ["Champagne: 100ml", "Succo Arancia: 50ml"], prep: "Simile al Mimosa ma con più Champagne." },
+        { name: "Rob Roy", ingredients: ["Scotch Whisky: 50ml", "Vermouth Rosso: 25ml", "Angostura"], prep: "Mescolare con ghiaccio e filtrare in coppa." },
+        { name: "Blood and Sand", ingredients: ["Scotch: 30ml", "Vermouth Rosso: 30ml", "Succo Arancia: 30ml", "Cherry Heering: 30ml"], prep: "Shakerare e filtrare in coppa." },
+        { name: "Hot Toddy", ingredients: ["Whiskey: 45ml", "Miele: 1 cucchiaio", "Limone", "Acqua Calda"], prep: "Sciogliere miele nel whiskey e acqua calda. Aggiungere limone." },
+        { name: "Sazerac", ingredients: ["Rye Whiskey: 60ml", "Zucchero: 1 zolletta", "Peychaud's Bitters", "Absinthe"], prep: "Sciacquare bicchiere con absinthe. Mescolare whiskey, zucchero e bitters. Versare nel bicchiere." },
+        { name: "Vieux Carré", ingredients: ["Rye Whiskey: 30ml", "Cognac: 30ml", "Vermouth Rosso: 30ml", "Benedictine", "Bitters"], prep: "Mescolare tutti gli ingredienti con ghiaccio e filtrare." },
+        { name: "Monkey Gland", ingredients: ["Gin: 45ml", "Succo Arancia: 30ml", "Absinthe: 1 dash", "Granatina: 1 dash"], prep: "Shakerare e filtrare in coppa." },
+        { name: "Pink Lady", ingredients: ["Gin: 30ml", "Calvados: 15ml", "Granatina: 15ml", "Limone: 15ml", "Albume"], prep: "Shakerare e filtrare in coppa." },
+        { name: "French Connection", ingredients: ["Cognac: 35ml", "Amaretto: 35ml"], prep: "Mescolare su ghiaccio in old fashioned." },
+        { name: "Paradise", ingredients: ["Gin: 35ml", "Apricot Brandy: 20ml", "Succo Arancia: 15ml"], prep: "Shakerare e filtrare in coppa." },
+        { name: "Jack Rose", ingredients: ["Applejack: 45ml", "Limone: 20ml", "Granatina: 15ml"], prep: "Shakerare e filtrare in coppa." },
+        { name: "Algonquin", ingredients: ["Rye Whiskey: 45ml", "Vermouth Dry: 15ml", "Succo Ananas: 15ml"], prep: "Shakerare e filtrare in coppa." },
+        { name: "Between the Sheets", ingredients: ["Rum: 30ml", "Cognac: 30ml", "Triple Sec: 30ml", "Limone: 15ml"], prep: "Shakerare e filtrare in coppa." },
+        { name: "Champs Elysees", ingredients: ["Cognac: 60ml", "Chartreuse: 15ml", "Limone: 15ml", "Sciroppo", "Angostura"], prep: "Shakerare e filtrare in coppa." },
+        { name: "Duchamp's Punch", ingredients: ["Rum: 45ml", "Pisco: 15ml", "Succo Limone: 15ml", "Sciroppo", "Angostura"], prep: "Shakerare e versare su ghiaccio." }
+    ];
+
+    // --- FUNZIONE PER CREARE DROPDOWN ---
+    function createDropdown(inputId, dropdownId, options, onSelect) {
+        const input = document.getElementById(inputId);
+        const dropdown = document.getElementById(dropdownId);
+        let selectedIndex = -1;
+
+        function renderList(filterText = "") {
+            dropdown.innerHTML = "";
+            selectedIndex = -1;
+            
+            const filtered = options.filter(opt => 
+                opt.toLowerCase().includes(filterText.toLowerCase())
+            );
+
+            if (filtered.length === 0) {
+                const div = document.createElement('div');
+                div.className = 'option';
+                div.innerText = "Nessun risultato";
+                div.style.color = "#999";
+                dropdown.appendChild(div);
+            } else {
+                filtered.forEach((opt, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'option';
+                    div.innerText = opt;
+                    div.dataset.index = index;
+                    div.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        onSelect(opt);
+                        input.value = opt;
+                        dropdown.style.display = "none";
+                    });
+                    dropdown.appendChild(div);
+                });
+            }
+            dropdown.style.display = "block";
+        }
+
+        // Click sull'input
+        input.addEventListener('click', function(e) {
+            e.stopPropagation();
+            renderList(input.value);
+        });
+
+        // Input typing
+        input.addEventListener('input', function() {
+            renderList(input.value);
+        });
+
+        // Focus
+        input.addEventListener('focus', function() {
+            renderList(input.value);
+        });
+
+        return renderList;
+    }
+
+    // --- INIZIALIZZAZIONE DROPDOWN ---
+    
+    // 1. Cocktail Dropdown
+    const cocktailNames = cocktailsDB.map(c => c.name);
+    createDropdown('cocktailInput', 'cocktailDropdown', cocktailNames, function(name) {
+        // Selezione cocktail
+    });
+
+    // 2. Ingredienti Dropdown (estrai ingredienti unici)
+    const uniqueIngredients = new Set();
+    cocktailsDB.forEach(c => {
+        c.ingredients.forEach(ing => {
+            const name = ing.split(':')[0].trim();
+            const cleanName = name.replace(/\d+/g, '').trim();
+            if(cleanName.length > 2) uniqueIngredients.add(cleanName);
+        });
+    });
+    const ingredientList = Array.from(uniqueIngredients).sort();
+    createDropdown('ingredientInput', 'ingredientDropdown', ingredientList, function(name) {
+        // Selezione ingrediente
+    });
+
+    // --- CHIUDI DROPDOWN CLICCANDO FUORI ---
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.form-group')) {
+            document.getElementById('cocktailDropdown').style.display = "none";
+            document.getElementById('ingredientDropdown').style.display = "none";
+        }
+    });
+
+    // --- FUNZIONI COCKTAIL ---
+
+    function getCocktailData(name) {
+        return cocktailsDB.find(c => c.name === name);
+    }
+
+    function showIngredients() {
+        const name = document.getElementById('cocktailInput').value.trim();
+        const people = parseInt(document.getElementById('peopleCount').value) || 1;
+        const cocktail = getCocktailData(name);
+
+        if (!cocktail) {
+            alert("Per favore seleziona un cocktail valido dalla lista.");
+            return;
+        }
+
+        const listContainer = document.getElementById('ingrList');
+        document.getElementById('ingrTitle').innerText = `Ingredienti per ${people} persone: ${cocktail.name}`;
+        listContainer.innerHTML = '';
+
+        cocktail.ingredients.forEach(ingr => {
+            const li = document.createElement('li');
+            const regex = /(\d+(\.\d+)?)/g;
+            const newIngr = ingr.replace(regex, (match) => {
+                return (parseFloat(match) * people).toFixed(1).replace(/\.0$/, ''); 
+            });
+            li.innerText = newIngr;
+            listContainer.appendChild(li);
+        });
+
+        document.getElementById('modalIngredients').style.display = "block";
+    }
+
+    function showPreparation() {
+        const name = document.getElementById('cocktailInput').value.trim();
+        const cocktail = getCocktailData(name);
+
+        if (!cocktail) {
+            alert("Per favore seleziona un cocktail valido dalla lista.");
+            return;
+        }
+
+        document.getElementById('prepTitle').innerText = `Preparazione: ${cocktail.name}`;
+        document.getElementById('prepText').innerText = cocktail.prep;
+        document.getElementById('modalPreparation').style.display = "block";
+    }
+
+    // --- RICERCA PER INGREDIENTE ---
+
+    function searchByIngredient() {
+        const ingredient = document.getElementById('ingredientInput').value.trim();
+        if (!ingredient) {
+            alert("Seleziona o scrivi un ingrediente.");
+            return;
+        }
+
+        const resultsDiv = document.getElementById('searchResults');
+        resultsDiv.innerHTML = "";
+        
+        const foundCocktails = cocktailsDB.filter(c => {
+            return c.ingredients.some(ing => ing.toLowerCase().includes(ingredient.toLowerCase()));
+        });
+
+        document.getElementById('searchTitle').innerText = `Risultati per: ${ingredient}`;
+        document.getElementById('searchSubtitle').innerText = `${foundCocktails.length} cocktail trovati`;
+
+        if (foundCocktails.length === 0) {
+            resultsDiv.innerHTML = "<p>Nessun cocktail trovato con questo ingrediente.</p>";
+        } else {
+            foundCocktails.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'result-item';
+                div.innerText = c.name;
+                div.onclick = function() {
+                    document.getElementById('cocktailInput').value = c.name;
+                    document.getElementById('cocktailDropdown').style.display = "none";
+                    closeModal('modalIngredientSearch');
+                };
+                resultsDiv.appendChild(div);
+            });
+        }
+
+        document.getElementById('modalIngredientSearch').style.display = "block";
+    }
+
+    // --- CHIUDI MODALI ---
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.style.display = "none";
+        }
+    }
+</script>
+
+</body>
+</html>
